@@ -4,7 +4,8 @@ All the tools i created and used for neuroml during my phd
 
 ## Install instructions
 
-```pip install mlneurotools
+```
+pip install mlneurotools
 ```
 
 ## What's inside ?
