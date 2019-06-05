@@ -4,8 +4,8 @@ All the tools i created and used for neuroml during my phd
 
 ## Install instructions
 
-Just copy the mlneuropytools in your site-packages or locally with your scripts to be able to import it.
-I am working on making the package installable via pip.
+```pip install mlneurotools
+```
 
 ## What's inside ?
 
