@@ -1,2 +1,2 @@
-from stats import *
-from ml import *
+from .stats import ttest_perm
+from .ml import utils
