@@ -202,14 +202,16 @@ def compute_pvalues(tval, perm_t, two_tailed, correction):
     scaling = len(perm_t)
     perm_t = np.array(perm_t)
     pvalues = []
+    tval_tocompare = tval
     if two_tailed:
         perm_t = abs(perm_t)
+        tval_tocompare = abs(tval)
 
     if correction == "maxstat":
         perm_t = np.asarray(perm_t).max(axis=1)
         perm_t = np.array([perm_t for _ in range(len(tval))]).T
 
-    for i, tstat in enumerate(tval):
+    for i, tstat in enumerate(tval_tocompare):
         p_final = 0
         compare_list = perm_t[:, i]
         for t_perm in compare_list:
