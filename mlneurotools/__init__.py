@@ -1,2 +1,2 @@
-import ml
-import stats
+from .ml import *
+from .stats import *
