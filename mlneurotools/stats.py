@@ -176,7 +176,8 @@ def perm_test(cond1, cond2, n_perm, function, equal_var=False, paired=False, n_j
 
     perms_index = _combinations(range(n_samples), len(cond1), n_perm)
     perm_t = Parallel(n_jobs=n_jobs)(
-        delayed(function)(full_mat, index, equal_var=equal_var) for index in perms_index
+        delayed(function)(full_mat, index, equal_var=equal_var, paired=paired)
+        for index in perms_index
     )
 
     return perm_t[1:]  # the first perm is not a permutation
