@@ -1,12 +1,80 @@
-"""Function do perform ttest indep with permutations
+"""Collection of stat functions: ttest, binom pvalues or score thresholds etc
 
 Author: Arthur Dehgan"""
-import numpy as np
-from scipy.stats import ttest_ind, ttest_rel
-from scipy.special import comb
 from itertools import combinations
+import numpy as np
+from scipy.stats import ttest_ind, ttest_rel, binom, zscore
+from scipy.special import comb
 from joblib import Parallel, delayed
 from sys import maxsize
+
+
+def compute_pval(score, perm_scores):
+    """computes pvalue of an item in a distribution)"""
+    n_perm = len(perm_scores)
+    pvalue = (np.sum(perm_scores >= score) + 1.0) / (n_perm + 1)
+    return pvalue
+
+
+def is_signif(pvalue, p=0.05):
+    """Tell if condition with classifier is significative.
+
+    Returns a boolean : True if the condition is significativeat given p
+    """
+    answer = False
+    if pvalue <= p:
+        answer = True
+    return answer
+
+
+def rm_outliers(data, rm_outl=2):
+    zs_dat = zscore(data)
+    to_keep = np.where(abs(zs_dat) < rm_outl)[0]
+    return data[to_keep]
+
+
+def binom_pval(score, test_set, n_classes=2):
+    """Computes the pvalue of your score according to the binomial law.
+
+    Parameters
+    ----------
+    score : float
+        The score you want to test for significance.
+
+    test_set : array or int
+        The array used for testing, or the total number of trials in the test set.
+
+    n_classes : int, optional (default=2)
+        The number of different classes in your classification problem.
+    """
+    if not isinstance(test_set, int):
+        test_set = len(test_set)
+    return binom.sf(score * test_set, test_set, 1 / n_classes)
+
+
+def binomial_chance_level(test_set, p=0.05, n_classes=2):
+    """Computes the chance level according to the binomial law
+
+    Parameters
+    ----------
+    test_set : array or int
+        The array used for testing, or the total number of trials in the test set.
+
+    p : float, optional (default=0.05)
+        The p value you want to reach.
+
+    n_classes : int, optional (default=2)
+        The number of different classes in your classification problem.
+
+    Returns
+    -------
+    score : float
+        The score threshold. Any score higher or equal than this score is significant with the
+        pvalue that was given in input.
+    """
+    if not isinstance(test_set, int):
+        test_set = len(test_set)
+    return binom.isf(p, test_set, 1 / n_classes) / test_set
 
 
 def relative_perm(
