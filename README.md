@@ -10,6 +10,8 @@ pip install mlneurotools
 
 ## What's inside ?
 
+To be updated
+
 in stats : ttest paired and unpaired with permutations, using parallel computing for the permutations. available corrections include FDR, maximum statistics, bonferonni.
 Currently investigating if the FDR correction is working properly (might be something wrong with it according to some feedback, but was unable to recreate the bug)
 
