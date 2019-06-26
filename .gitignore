@@ -1,0 +1,10 @@
+*.pyc
+*.mat
+*.bak
+*~
+crash*
+*.egg-info/*
+dist/*
+
+# Sphinx documentation
+docs/_*
