@@ -139,11 +139,10 @@ def elapsed_time(t0, t1, formating=True):
 
     Parameters
     ----------
-    t0: float,
+    t0: float
         time.time() initial measure of time
         (eg. at the begining of the script)
-
-    t1: float,
+    t1: float
         time.time() time at the end of the script
         or the execution of a function.
 

@@ -40,10 +40,8 @@ def binom_pval(score, test_set, n_classes=2):
     ----------
     score : float
         The score you want to test for significance.
-
     test_set : array or int
         The array used for testing, or the total number of trials in the test set.
-
     n_classes : int, optional (default=2)
         The number of different classes in your classification problem.
     """
@@ -59,10 +57,8 @@ def binomial_chance_level(test_set, p=0.05, n_classes=2):
     ----------
     test_set : array or int
         The array used for testing, or the total number of trials in the test set.
-
     p : float, optional (default=0.05)
         The p value you want to reach.
-
     n_classes : int, optional (default=2)
         The number of different classes in your classification problem.
 
@@ -90,35 +86,36 @@ def relative_perm(
     """compute relative changes (cond1 - cond2)/cond2
        with permuattions and correction.
 
-    Parameters:
-        cond1, cond2: numpy arrays of shape n_subject x n_eletrodes
-                      or n_trials x n_electrodes. arrays of data for
-                      the independant conditions.
+    Parameters
+    ----------
+    cond1, cond2 : arrays
+        numpy arrays of shape (n_subject x n_eletrodes or n_trials x n_electrodes).
+        arrays of data for the independant conditions.
+    n_perm : int, optionnal (default=0)
+        The number of permutations to do. If n_perm = 0 then exaustive permutations will be
+        done. It will take exponential time with data size.
+    correction : string, optional (default=None)
+        The choice of correction to compute pvalues. If None, no correction will be done
+        Options are 'maxstat', 'fdr', 'bonferroni', None
+    method : string, optionnal (default='indep')
+        Necessary only for fdr correction. Implements Benjamini/Hochberg method if 'indep' or
+        Benjamini/Yekutieli if 'negcorr'.
+    alpha: float, optionnal (default=0.05)
+        The error rate
+    two_tailed: bool, optionnal (default=False)
+        set to True if you want two-tailed ttest.
+    paired : bool, optionnal (default=False)
+        Set if the condition 1 and 2 are paired condition or independent.
+    n_jobs: int, optionnal (default=1)
+        Number of cores used to computer permutations in parallel (-1 uses all cores and will be
+        faster)
 
-        n_perm: int, number of permutations to do.
-                If n_perm = 0 then exaustive permutations will be done.
-                It will take exponential time with data size.
-
-        correction: string, None, the choice of correction to compute
-                    pvalues. If None, no correction will be done
-                    Options are 'maxstat', 'fdr', 'bonferroni', None
-
-        method : 'indep' | 'negcorr'
-                Necessary only for fdr correction.
-                Implements Benjamini/Hochberg method if 'indep' or
-                Benjamini/Yekutieli if 'negcorr'.
-
-        alpha: float, error rate
-
-        two_tailed: bool, set to True if you want two-tailed ttest.
-
-        n_jobs: int, Number of cores used to computer permutations in
-                parallel (-1 uses all cores and will be faster)
-
-    Returns:
-        values: list, the calculated relative changes
-
-        pval: pvalues after permutation test and correction if selected
+    Returns
+    -------
+    values : list
+        The calculated relative changes
+    pval : list
+        The pvalues after permutation test and correction if selected
     """
     _check_correction(correction)
 
@@ -148,37 +145,38 @@ def ttest_perm(
 ):
     """ttest indep with permuattions and maxstat correction
 
-    Parameters:
-        cond1, cond2: numpy arrays of shape n_subject x n_eletrodes
-                      or n_trials x n_electrodes. arrays of data for
-                      the independant conditions.
+    Parameters
+    ----------
+    cond1, cond2 : arrays
+        Must be of shape (n_subject x n_eletrodes) or n_trials x n_electrodes. arrays of data
+        for the independant conditions.
+    n_perm : int, optionnal (default=0)
+        The number of permutations to do, if n_perm = 0 then exaustive permutations will be done.
+        It will take exponential time with data size.
+    correction : string, optionnal (default=None)
+        The choice of correction to compute pvalues, if None, no correction will be done.
+        Options are 'maxstat', 'fdr', 'bonferroni', None
+    method : string, optionnal (default='indep')
+        Necessary only for fdr correction. Implements Benjamini/Hochberg method if 'indep' or
+        Benjamini/Yekutieli if 'negcorr'.
+    alpha : float, optionnal (default=0.05)
+        The error rate
+    equal_var : bool, optionnal (default=False)
+        If the variance of the two distributions are the same. See scipy.stats.ttest_ind for more info.
+    two_tailed : bool, optionnal (default=False)
+        Set to True for a two-tailed ttest.
+    paired : bool, optionnal (default=False)
+        Set if the condition 1 and 2 are paired condition or independent.
+    n_jobs : int, optionnal (default=1)
+        Number of cores used to computer permutations in parallel (-1 uses all cores and will be faster)
 
-        n_perm: int, number of permutations to do.
-                If n_perm = 0 then exaustive permutations will be done.
-                It will take exponential time with data size.
+    Returns
+    -------
+        tval : list
+            The calculated t-statistics
+        pval :
+            The pvalues after permutation test and correction if selected
 
-        correction: string, None, the choice of correction to compute
-                    pvalues. If None, no correction will be done
-                    Options are 'maxstat', 'fdr', 'bonferroni', None
-
-        method : 'indep' | 'negcorr'
-                Necessary only for fdr correction.
-                Implements Benjamini/Hochberg method if 'indep' or
-                Benjamini/Yekutieli if 'negcorr'.
-
-        alpha: float, error rate
-
-        equal_var: bool, see scipy.stats.ttest_ind.
-
-        two_tailed: bool, set to True if you want two-tailed ttest.
-
-        n_jobs: int, Number of cores used to computer permutations in
-                parallel (-1 uses all cores and will be faster)
-
-    Returns:
-        tval: list, the calculated t-statistics
-
-        pval: pvalues after permutation test and correction if selected
     """
     _check_correction(correction)
 
@@ -202,22 +200,27 @@ def ttest_perm(
 def perm_test(cond1, cond2, n_perm, function, equal_var=False, paired=False, n_jobs=1):
     """permutation ttest.
 
-    Parameters:
-        cond1, cond2: numpy arrays of shape n_subject x n_eletrodes
-                      or n_trials x n_electrodes. arrays of data for
-                      the independant conditions.
+    Parameters
+    ----------
+    cond1, cond2 : arrays
+        Must be of shape (n_subject x n_eletrodes) or n_trials x n_electrodes. arrays of data
+        for the independant conditions.
+    n_perm : int
+        The number of permutations to do.
+    function: function
+        The function to execute in parallel on the data.
+    equal_var : bool, optionnal (default=False)
+        If the variance of the two distributions are the same. See scipy.stats.ttest_ind for more info.
+    paired : bool, optionnal (default=False)
+        Set if the condition 1 and 2 are paired condition or independent.
+    n_jobs : int, optionnal (default=1)
+        Number of cores used to computer permutations in parallel (-1 uses all cores and will be faster)
 
-        n_perm: int, number of permutations to do, the more the better.
+    Returns
+    -------
+    perm_t :
+        The list of permutation t-statistics
 
-        function: func, the function to execute in parallel on the data.
-
-        equal_var: bool, see scipy.stats.ttest_ind.
-
-        n_jobs: int, Number of cores used to computer permutations in
-                parallel (-1 uses all cores and will be faster)
-
-    Returns:
-        perm_t: list of permutation t-statistics
     """
     full_mat = np.concatenate((cond1, cond2), axis=0)
     n_samples = len(full_mat)
@@ -254,19 +257,23 @@ def perm_test(cond1, cond2, n_perm, function, equal_var=False, paired=False, n_j
 def compute_pvalues(tval, perm_t, two_tailed, correction):
     """computes pvalues.
 
-    Parameters:
-        tstat: computed t-statistics
+    Parameters
+    ----------
+    tstat : list
+        The computed t-statistics.
+    perm_t : list
+        The list of permutation t-statistics.
+    two_tailed : bool
+        Will activate or deactivate two-tailed ttest.
+    correction : string
+        The choice of correction to compute pvalues. If None, no correction will be done
+        Options are 'maxstat', 'fdr', 'bonferroni', None
 
-        perm_t: list of permutation t-statistics
+    Returns
+    -------
+    pvalues : list
+        The list of pvalues after permutation test.
 
-        two_tailed: bool, if you want two-tailed ttest.
-
-        correction: string, None, the choice of correction to compute
-                    pvalues. If None, no correction will be done
-                    Options are 'maxstat', 'fdr', 'bonferroni', None
-
-    Returns:
-        pvalues: list of pvalues after permutation test
     """
     scaling = len(perm_t)
     perm_t = np.array(perm_t)
@@ -296,20 +303,22 @@ def compute_pvalues(tval, perm_t, two_tailed, correction):
 def pvalues_correction(pvalues, correction, method):
     """computes corrected pvalues from pvalues.
 
-    Parameters:
-        pvalues: list, list of pvalues.
+    Parameters
+    ----------
+    pvalues : list
+        The list of pvalues.
+    correction: string
+        The choice of correction to compute pvalues. If None, no correction will be done
+        Options are 'maxstat', 'fdr', 'bonferroni', None
+    method : string
+        Necessary only for fdr correction. Implements Benjamini/Hochberg method if 'indep' or
+        Benjamini/Yekutieli if 'negcorr'.
 
-        correction: string, None, the choice of correction to compute
-                    pvalues. If None, no correction will be done
-                    Options are 'maxstat', 'fdr', 'bonferroni', None
+    Returns
+    -------
+    pvalues : list
+        The list of corrected pvalues
 
-        method : 'indep' | 'negcorr'
-                Necessary only for fdr correction.
-                Implements Benjamini/Hochberg method if 'indep' or
-                Benjamini/Yekutieli if 'negcorr'.
-
-    Returns:
-        pvalues: list of corrected pvalues
     """
     if correction == "bonferroni":
         pvalues *= float(np.array(pvalues).size)
@@ -341,13 +350,17 @@ def pvalues_correction(pvalues, correction, method):
 def compute_relatives(cond1, cond2, **kwargs):
     """Computes the relative changes.
 
-    Parameters:
-        cond1, cond2: numpy arrays of shape n_subject x n_eletrodes
-                      or n_trials x n_electrodes. arrays of data for
-                      the independant conditions.
+    Parameters
+    ----------
+    cond1, cond2 : array
+        Arrays of shape (n_subject x n_eletrodes) or (n_trials x n_electrodes). The arrays of data
+        for the conditions.
 
-    Returns:
-        values: list, the calculated relative changes
+    Returns
+    -------
+    values : list
+        The calculated relative changes
+
     """
     cond1 = np.asarray(cond1).mean(axis=0)
     cond2 = np.asarray(cond2).mean(axis=0)
@@ -358,13 +371,18 @@ def compute_relatives(cond1, cond2, **kwargs):
 def _generate_conds(data, index):
     """
 
-    Parameters:
-        data: numpy array of the concatenated condition data.
+    Parameters
+    ----------
+    data : array
+        Array of the concatenated condition data.
+    index : list
+        The permutation index to apply.
 
-        index: the permutation index to apply.
+    Returns
+    -------
+    cond1, cond2 : array
+        Generated array from cond1 and cond2, contains permuted values.
 
-    Returns:
-        cond1, cond2: numpy arrays of permutated values.
     """
     index = list(index)
     index_comp = list(set(range(len(data))) - set(index))

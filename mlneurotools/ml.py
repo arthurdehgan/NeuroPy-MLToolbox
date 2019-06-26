@@ -14,7 +14,7 @@ from stats import compute_pval
 
 
 def _cross_val(train_index, test_index, estimator, X, y):
-    """Computes predictions for a subset of data."""
+    """fit and predict using the given data."""
     clf = clone(estimator)
     x_train, x_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
@@ -23,9 +23,10 @@ def _cross_val(train_index, test_index, estimator, X, y):
     return y_pred, y_test
 
 
-def cross_val_scores(estimator, cv, X, y, groups=None, n_jobs=1):
+def cross_val_score(estimator, cv, X, y, groups=None, n_jobs=1):
     """Computes all crossval on the chosen estimator, cross-val and dataset.
-    To use instead of sklearn cross_val_score if you want both roc_auc and
+
+    it can be used instead of sklearn.model_selection.cross_val_score if you want both roc_auc and
     acc in one go."""
     clf = clone(estimator)
     crossv = clone(cv, safe=False)
@@ -53,10 +54,10 @@ def _permutations(iterable, size, limit=None):
     """Combinations Generator"""
     i = 0
     for elem in permutations(iterable, size):
-        yield elem
         i += 1
         if limit is not None and i == limit:
             break
+        yield elem
 
 
 def permutation_test(estimator, cv, X, y, groups=None, n_perm=0, n_jobs=1):
@@ -67,7 +68,7 @@ def permutation_test(estimator, cv, X, y, groups=None, n_perm=0, n_jobs=1):
         clf = clone(estimator)
         y_perm = y[perm_index]
         groups_perm = groups[perm_index]
-        perm_acc, perm_auc = cross_val_scores(clf, cv, X, y_perm, groups_perm, n_jobs)
+        perm_acc, perm_auc = cross_val_score(clf, cv, X, y_perm, groups_perm, n_jobs)
         acc_pscores.append(np.mean(perm_acc))
         auc_pscores.append(np.mean(perm_auc))
 
@@ -81,24 +82,18 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
     ----------
     estimator : sklearn Estimator
         The estimator that will fit and be tested.
-
     cv : sklearn CrossValidator
         The cross-validation method that will be used to test the estimator.
-
     X : array
         The Data, must be of shape (n_samples x n_features).
-
     y : list or array
         The labels used for training and testing.
-
     groups : list or array, optional
         The groups for groups based cross-validations
-
     perm : int, optional
         The number of permutations that will be done to assert significance of the result.
         None means no permutations will be computed
-
-    n_jobs : int, optional, default: 1
+    n_jobs : int, optional (default=1)
         The number of threads to use for the cross-validations. higher means faster. setting
         to -1 will use all available threads - Warning: may slow down computer. Set to -2 to
         keep a thread available for display and other tasks on the computer.
@@ -137,7 +132,7 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
             )
             exit()
     clf = clone(estimator)
-    accuracies, aucs = cross_val_scores(clf, cv, X, y, groups, n_jobs)
+    accuracies, aucs = cross_val_score(clf, cv, X, y, groups, n_jobs)
     acc_score = np.mean(accuracies)
     auc_score = np.mean(aucs)
     save = {
@@ -166,6 +161,7 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
 
 class StratifiedShuffleGroupSplit(BaseEstimator):
     def __init__(self, n_groups, n_iter=None):
+        """Pre-initialization."""
         self.n_groups = n_groups
         self.n_iter = n_iter
         self.counter = 0
@@ -177,7 +173,7 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
         self.indexes = None
 
     def _init_atributes(self, y, groups):
-        """Initialization of the cross-validation object."""
+        """Initialization."""
         if len(y) != len(groups):
             raise Exception("Error: y and groups need to have the same length")
         if y is None:
@@ -214,8 +210,8 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
         groups : list
             The groups list
 
-        Returns
-        -------
+        Yields
+        ------
         n_splits : int
             The number of splits.
         """
