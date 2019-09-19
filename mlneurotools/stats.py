@@ -73,75 +73,6 @@ def binomial_chance_level(test_set, p=0.05, n_classes=2):
     return binom.isf(p, test_set, 1 / n_classes) / test_set
 
 
-def relative_perm(
-    cond1,
-    cond2,
-    n_perm=0,
-    correction="maxstat",
-    method="indep",
-    alpha=0.05,
-    two_tailed=False,
-    paired=False,
-    equal_var=False,
-    n_jobs=1,
-):
-    """compute relative changes (cond1 - cond2)/cond2
-       with permuattions and correction.
-
-    Parameters
-    ----------
-    cond1, cond2 : arrays
-        numpy arrays of shape (n_subject x n_eletrodes or n_trials x n_electrodes).
-        arrays of data for the independant conditions.
-    n_perm : int, optionnal (default=0)
-        The number of permutations to do. If n_perm = 0 then exaustive permutations will be
-        done. It will take exponential time with data size.
-    correction : string, optional (default=None)
-        The choice of correction to compute pvalues. If None, no correction will be done
-        Options are 'maxstat', 'fdr', 'bonferroni', None
-    method : string, optionnal (default='indep')
-        Necessary only for fdr correction. Implements Benjamini/Hochberg method if 'indep' or
-        Benjamini/Yekutieli if 'negcorr'.
-    alpha: float, optionnal (default=0.05)
-        The error rate
-    two_tailed: bool, optionnal (default=False)
-        set to True if you want two-tailed ttest.
-    paired : bool, optionnal (default=False)
-        Set if the condition 1 and 2 are paired condition or independent.
-    equal_var : bool, optionnal (default=False)
-        If the variance of the two distributions are the same. See scipy.stats.ttest_ind for more info.
-    n_jobs: int, optionnal (default=1)
-        Number of cores used to computer permutations in parallel (-1 uses all cores and will be
-        faster)
-
-    Returns
-    -------
-    values : list
-        The calculated relative changes
-    tval : list
-        The calculated t-statistics
-    pval : list
-        The pvalues after permutation test and correction if selected
-    """
-    _check_correction(correction)
-
-    values = compute_relatives(cond1, cond2)
-
-    perm_t = perm_test(cond1, cond2, n_perm, compute_relatives, n_jobs=n_jobs)
-
-    if paired:
-        tval, _ = ttest_rel(cond1, cond2)
-    else:
-        tval, _ = ttest_ind(cond1, cond2, equal_var=equal_var)
-
-    pval = compute_pvalues(tval, perm_t, two_tailed, correction=correction)
-
-    if correction in ["bonferroni", "fdr"]:
-        pval = pvalues_correction(pval, correction, method)
-
-    return values, tval, pval
-
-
 def ttest_perm(
     cond1,
     cond2,
@@ -356,27 +287,6 @@ def pvalues_correction(pvalues, correction, method):
     pvalues[pvalues > 1.0] = 1.0
 
     return pvalues
-
-
-def compute_relatives(cond1, cond2, **kwargs):
-    """Computes the relative changes.
-
-    Parameters
-    ----------
-    cond1, cond2 : array
-        Arrays of shape (n_subject x n_eletrodes) or (n_trials x n_electrodes). The arrays of data
-        for the conditions.
-
-    Returns
-    -------
-    values : list
-        The calculated relative changes
-
-    """
-    cond1 = np.asarray(cond1).mean(axis=0)
-    cond2 = np.asarray(cond2).mean(axis=0)
-    values = (cond1 - cond2) / cond2
-    return values
 
 
 def _generate_conds(data, index):

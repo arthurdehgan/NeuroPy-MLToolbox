@@ -5,7 +5,28 @@ import time
 import functools
 import numpy as np
 from scipy.io import loadmat
-from stats import rm_outliers
+from .stats import rm_outliers
+
+
+def compute_relatives(cond1, cond2, **kwargs):
+    """Computes the relative changes.
+
+    Parameters
+    ----------
+    cond1, cond2 : array
+        Arrays of shape (n_subject x n_eletrodes) or (n_trials x n_electrodes). The arrays of data
+        for the conditions.
+
+    Returns
+    -------
+    values : list
+        The calculated relative changes
+
+    """
+    cond1 = np.asarray(cond1).mean(axis=0)
+    cond2 = np.asarray(cond2).mean(axis=0)
+    values = (cond1 - cond2) / cond2
+    return values
 
 
 def proper_loadmat(file_path):
