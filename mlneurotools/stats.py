@@ -81,6 +81,8 @@ def relative_perm(
     method="indep",
     alpha=0.05,
     two_tailed=False,
+    paired=False,
+    equal_var=False,
     n_jobs=1,
 ):
     """compute relative changes (cond1 - cond2)/cond2
@@ -106,6 +108,8 @@ def relative_perm(
         set to True if you want two-tailed ttest.
     paired : bool, optionnal (default=False)
         Set if the condition 1 and 2 are paired condition or independent.
+    equal_var : bool, optionnal (default=False)
+        If the variance of the two distributions are the same. See scipy.stats.ttest_ind for more info.
     n_jobs: int, optionnal (default=1)
         Number of cores used to computer permutations in parallel (-1 uses all cores and will be
         faster)
@@ -114,6 +118,8 @@ def relative_perm(
     -------
     values : list
         The calculated relative changes
+    tval : list
+        The calculated t-statistics
     pval : list
         The pvalues after permutation test and correction if selected
     """
@@ -123,12 +129,17 @@ def relative_perm(
 
     perm_t = perm_test(cond1, cond2, n_perm, compute_relatives, n_jobs=n_jobs)
 
-    pval = compute_pvalues(values, perm_t, two_tailed, correction=correction)
+    if paired:
+        tval, _ = ttest_rel(cond1, cond2)
+    else:
+        tval, _ = ttest_ind(cond1, cond2, equal_var=equal_var)
+
+    pval = compute_pvalues(tval, perm_t, two_tailed, correction=correction)
 
     if correction in ["bonferroni", "fdr"]:
         pval = pvalues_correction(pval, correction, method)
 
-    return values, pval
+    return values, tval, pval
 
 
 def ttest_perm(
@@ -331,7 +342,7 @@ def pvalues_correction(pvalues, correction, method):
         ecdf = (np.arange(n_obs) + 1) / float(n_obs)
 
         if method == "negcorr":
-            cm = np.sum(1. / (np.arange(n_obs) + 1))
+            cm = np.sum(1.0 / (np.arange(n_obs) + 1))
             ecdf /= cm
         elif method == "indep":
             pass
@@ -425,9 +436,14 @@ def _check_correction(correction):
 if __name__ == "__main__":
     cond1 = np.random.randn(10, 19)
     cond2 = np.random.randn(10, 19)
-    tval, pval = ttest_perm(cond1, cond2, n_perm=100)
-    tval4, pval4 = ttest_perm(cond1, cond2, n_perm=100, correction="maxstat")
-    tval2, pval2 = ttest_perm(cond1, cond2, n_perm=100, correction="bonferroni")
-    tval3, pval3 = ttest_perm(cond1, cond2, n_perm=100, correction="fdr")
-    val, pval4 = relative_perm(cond1, cond2, n_perm=10)
-    print(pval, pval2, pval4, pval3)
+    # print(cond1, cond2, sep="\n")
+    tval1, pval1 = ttest_perm(cond1, cond2, two_tailed=True, n_perm=1000)
+    tval2, pval2 = ttest_perm(
+        cond1, cond2, n_perm=1000, two_tailed=True, correction="bonferroni"
+    )
+    tval3, pval3 = ttest_perm(
+        cond1, cond2, n_perm=1000, two_tailed=True, correction="fdr"
+    )
+    val, tval4, pval4 = relative_perm(cond1, cond2, n_perm=1000, two_tailed=True)
+    print(pval1, pval2, pval3, pval4)
+    # print(tval4, pval4, sep="\n")
