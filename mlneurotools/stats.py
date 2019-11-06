@@ -290,7 +290,7 @@ def pvalues_correction(pvalues, correction, method):
 
 
 def _generate_conds(data, index):
-    """
+    """Generates permuted matrices.
 
     Parameters
     ----------
@@ -322,12 +322,6 @@ def _combinations(iterable, r, limit=None):
             break
 
 
-def _relative_perm(data, index, **kwargs):
-    """Compute realtives changes after on a selectes permutation"""
-    cond1, cond2 = _generate_conds(data, index)
-    return compute_relatives(cond1, cond2, kwargs)
-
-
 def _ttest_perm(data, index, equal_var, paired):
     """ttest with the permutation index"""
     cond1, cond2 = _generate_conds(data, index)
@@ -354,6 +348,4 @@ if __name__ == "__main__":
     tval3, pval3 = ttest_perm(
         cond1, cond2, n_perm=1000, two_tailed=True, correction="fdr"
     )
-    val, tval4, pval4 = relative_perm(cond1, cond2, n_perm=1000, two_tailed=True)
-    print(pval1, pval2, pval3, pval4)
-    # print(tval4, pval4, sep="\n")
+    print(pval1, pval2, pval3)
