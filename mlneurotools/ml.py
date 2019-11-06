@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 import numpy as np
 from numpy.random import permutation
 from joblib import Parallel, delayed
-from .stats import compute_pval
+from stats import compute_pval
 
 
 def _cross_val(train_index, test_index, estimator, X, y):
