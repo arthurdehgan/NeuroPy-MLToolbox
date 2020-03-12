@@ -18,9 +18,9 @@ def _cross_val(train_index, test_index, estimator, X, y, groups=None):
     clf = clone(estimator)
     x_train, x_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
-    if groups is not None:
+    try:
         clf.fit(x_train, y_train, groups[train_index])
-    else:
+    except:
         clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     return y_pred, y_test
