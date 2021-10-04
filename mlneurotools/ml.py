@@ -5,7 +5,7 @@ StratifiedShuffleGroupSplit
 Author: Arthur Dehgan"""
 from itertools import permutations, product
 from sklearn.base import clone, BaseEstimator
-from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import StratifiedShuffleSplit as SSS, LeavePGroupsOut
 from sklearn.metrics import accuracy_score, roc_auc_score
 import numpy as np
 from numpy.random import permutation
@@ -159,8 +159,84 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
     return save
 
 
+class StratifiedGroupKFold(BaseEstimator):
+    def __init__(self, n_splits=5, random_state=0):
+        """Pre-initialization."""
+        self.n_splits = n_splits
+        self.random_state = random_state
+
+    def _init_atributes(self, y, groups):
+        """Initialization."""
+        if len(y) != len(groups):
+            raise Exception("Error: y and groups need to have the same length")
+        if y is None:
+            raise Exception("Error: y cannot be None")
+        if groups is None:
+            raise Exception("Error: this function requires a groups parameter")
+        self.n_groups = len(set(n_groups))
+
+    def split(self, X, y, groups):
+        """generator for splits of the data.
+
+        Parameters
+        ----------
+        X : array
+            The data, of shape (n_trials x n_features)
+        y : list
+            The labels list
+        groups : list
+            The groups list
+
+        Yields
+        ------
+        train_idx : array
+            The index of the values in the train split.
+        test_idx : array
+            The index of the values in the test split.
+        """
+        self._init_atributes(y, groups)
+        y = np.asarray(y)
+        groups = np.asarray(groups)
+        n = len(groups)
+        unique_groups, group_idx = np.unique(groups, return_index=True)
+        groups_labels = y[group_idx]
+        for train, test in SSS(
+            n_splits=self.n_splits, random_state=self.random_state
+        ).fit(unique_groups, groups_labels):
+            train_groups = unique_groups[train]
+            test_groups = unique_groups[test]
+            train_idx = np.arange(n)[np.in1d(groups, train_groups)]
+            test_idx = np.arange(n)[np.in1d(groups, test_groups)]
+            yield train_idx, test_idx
+
+    def get_n_splits(self, X, y, groups):
+        """Gives the number of splits.
+
+        Parameters
+        ----------
+        X : placeholder for compatibility
+        y : list
+            The labels list
+        groups : list
+            The groups list
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        self._init_atributes(y, groups)
+        if self.n_iter is not None:
+            return self.n_iter
+        groups = np.asarray(groups)
+        n = 1
+        for index, lpgo in zip(self.indexes, self.lpgos):
+            n *= lpgo.get_n_splits(None, None, groups[index])
+        return n
+
+
 class StratifiedShuffleGroupSplit(BaseEstimator):
-    def __init__(self, n_groups, n_iter=None):
+    def __init__(self, n_groups, n_iter=None, random_state=0):
         """Pre-initialization."""
         self.n_groups = n_groups
         self.n_iter = n_iter
@@ -171,6 +247,7 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
         self.labels_list = None
         self.lpgos = None
         self.indexes = None
+        self.random_state = random_state
 
     def _init_atributes(self, y, groups):
         """Initialization."""
@@ -194,7 +271,9 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
             for label in self.labels_list:
                 index = np.where(y == label)[0]
                 indexes.append(index)
-                lpgos.append(LeavePGroupsOut(self.n_each))
+                lpgos.append(
+                    LeavePGroupsOut(self.n_each, random_state=self.random_state)
+                )
             self.lpgos = lpgos
             self.indexes = np.array(indexes)
 
@@ -212,8 +291,10 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
 
         Yields
         ------
-        n_splits : int
-            The number of splits.
+        train_idx : array
+            The index of the values in the train split.
+        test_idx : array
+            The index of the values in the test split.
         """
         self._init_atributes(y, groups)
         y = np.asarray(y)
