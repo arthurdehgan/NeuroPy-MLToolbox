@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="mlneurotools",
-    version="0.2.5",
+    version="0.2.7",
     description="Tools for stats and ml",
     url="http://github.com/arthurdehgan/NeuroPy-MLToolbox",
     author="Arthur Dehgan",
