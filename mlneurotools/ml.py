@@ -173,7 +173,7 @@ class StratifiedGroupKFold(BaseEstimator):
             raise Exception("Error: y cannot be None")
         if groups is None:
             raise Exception("Error: this function requires a groups parameter")
-        self.n_groups = len(set(n_groups))
+        self.n_groups = len(set(groups))
 
     def split(self, X, y, groups):
         """generator for splits of the data.
