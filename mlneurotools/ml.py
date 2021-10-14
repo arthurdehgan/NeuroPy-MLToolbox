@@ -196,43 +196,18 @@ class StratifiedGroupKFold(BaseEstimator):
         """
         self._init_atributes(y, groups)
         y = np.asarray(y)
+        n = len(y)
         groups = np.asarray(groups)
-        n = len(groups)
         unique_groups, group_idx = np.unique(groups, return_index=True)
         groups_labels = y[group_idx]
         for train, test in SSS(
             n_splits=self.n_splits, random_state=self.random_state
-        ).fit(unique_groups, groups_labels):
+        ).split(unique_groups, groups_labels):
             train_groups = unique_groups[train]
             test_groups = unique_groups[test]
             train_idx = np.arange(n)[np.in1d(groups, train_groups)]
             test_idx = np.arange(n)[np.in1d(groups, test_groups)]
             yield train_idx, test_idx
-
-    def get_n_splits(self, X, y, groups):
-        """Gives the number of splits.
-
-        Parameters
-        ----------
-        X : placeholder for compatibility
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Returns
-        -------
-        n_splits : int
-            The number of splits.
-        """
-        self._init_atributes(y, groups)
-        if self.n_iter is not None:
-            return self.n_iter
-        groups = np.asarray(groups)
-        n = 1
-        for index, lpgo in zip(self.indexes, self.lpgos):
-            n *= lpgo.get_n_splits(None, None, groups[index])
-        return n
 
 
 class StratifiedShuffleGroupSplit(BaseEstimator):
