@@ -165,6 +165,9 @@ class StratifiedGroupKFold(BaseEstimator):
         self.n_splits = n_splits
         self.random_state = random_state
 
+    def gen_n_splits(self):
+        return self.n_splits
+
     def _init_atributes(self, y, groups):
         """Initialization."""
         if len(y) != len(groups):
