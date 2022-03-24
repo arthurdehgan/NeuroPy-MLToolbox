@@ -13,12 +13,15 @@ from joblib import Parallel, delayed
 from .stats import compute_pval
 
 
-def _cross_val(train_index, test_index, estimator, X, y):
+def _cross_val(train_index, test_index, estimator, X, y, groups=None):
     """fit and predict using the given data."""
     clf = clone(estimator)
     x_train, x_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
-    clf.fit(x_train, y_train)
+    try:
+        clf.fit(x_train, y_train, groups[train_index])
+    except:
+        clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     return y_pred, y_test
 
@@ -31,7 +34,7 @@ def cross_val_score(estimator, cv, X, y, groups=None, n_jobs=1):
     clf = clone(estimator)
     crossv = clone(cv, safe=False)
     results = Parallel(n_jobs=n_jobs)(
-        delayed(_cross_val)(train_index, test_index, clf, X, y)
+        delayed(_cross_val)(train_index, test_index, clf, X, y, groups)
         for train_index, test_index in crossv.split(X=X, y=y, groups=groups)
     )
 
