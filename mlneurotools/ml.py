@@ -63,16 +63,19 @@ def _permutations(iterable, size, limit=None):
 def permutation_test(estimator, cv, X, y, groups=None, n_perm=0, n_jobs=1):
     """Will do compute permutations aucs and accs."""
     acc_pscores, auc_pscores = [], []
+    f1_pscores, bacc_pscores = [], []
     for _ in range(n_perm):
         perm_index = permutation(len(y))
         clf = clone(estimator)
         y_perm = y[perm_index]
         groups_perm = groups[perm_index]
-        perm_acc, perm_auc = cross_val_score(clf, cv, X, y_perm, groups_perm, n_jobs)
+        perm_acc, perm_auc, perm_f1_score, perm_bacc = cross_val_score(clf, cv, X, y_perm, groups_perm, n_jobs)
         acc_pscores.append(np.mean(perm_acc))
         auc_pscores.append(np.mean(perm_auc))
+        bacc_pscores.append(np.mean(perm_bacc))
+        f1_pscores.append(np.mean(perm_f1_score))
 
-    return acc_pscores, auc_pscores
+    return acc_pscores, auc_pscores, bacc_pscores ,f1_pscores
 
 
 def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
@@ -132,27 +135,39 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
             )
             exit()
     clf = clone(estimator)
-    accuracies, aucs = cross_val_score(clf, cv, X, y, groups, n_jobs)
+    accuracies, aucs, f1_scores, balanced_accuracies = cross_val_score(clf, cv, X, y, groups, n_jobs)
     acc_score = np.mean(accuracies)
     auc_score = np.mean(aucs)
+    f1_score = np.mean(f1_scores)
+    bacc_score = np.mean(balanced_accuracies)
     save = {
         "acc_score": [acc_score],
         "auc_score": [auc_score],
+        "f1_score": [acc_score],
+        "bacc_score": [auc_score],
         "acc": accuracies,
         "auc": aucs,
+        "f1": f1_scores,
+        "bacc": balanced_accuracies,
         "n_splits": cv.get_n_splits(X, y, groups),
     }
     if perm is not None:
-        acc_pscores, auc_pscores = permutation_test(clf, cv, X, y, groups, perm, n_jobs)
+        acc_pscores, auc_pscores, f1_pscores, bacc_pscores = permutation_test(clf, cv, X, y, groups, perm, n_jobs)
         acc_pvalue = compute_pval(acc_score, acc_pscores)
         auc_pvalue = compute_pval(auc_score, auc_pscores)
+        f1_pvalue = compute_pval(f1_score, f1_pscores)
+        bacc_pvalue = compute_pval(bacc_score, bacc_pscores)
 
         save.update(
             {
                 "auc_pvalue": auc_pvalue,
                 "acc_pvalue": acc_pvalue,
+                "f1_pvalue": f1_pvalue,
+                "bacc_pvalue": bacc_pvalue,
                 "auc_pscores": auc_pscores,
                 "acc_pscores": acc_pscores,
+                "f1_pscores": f1_pscores,
+                "bacc_pscores": bacc_pscores,
             }
         )
 
