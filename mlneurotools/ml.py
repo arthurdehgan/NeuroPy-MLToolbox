@@ -6,7 +6,12 @@ Author: Arthur Dehgan"""
 from itertools import permutations, product
 from sklearn.base import clone, BaseEstimator
 from sklearn.model_selection import StratifiedShuffleSplit as SSS, LeavePGroupsOut
-from sklearn.metrics import accuracy_score, roc_auc_score, balanced_accuracy_score, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    roc_auc_score,
+    balanced_accuracy_score,
+    f1_score,
+)
 import numpy as np
 from numpy.random import permutation
 from joblib import Parallel, delayed
@@ -44,7 +49,7 @@ def cross_val_score(estimator, cv, X, y, groups=None, n_jobs=1):
         except:
             auc_list.append(np.nan)
         f1_scores.append(f1_score(y_test, y_pred))
-        balanced_accuracies.append(balanced_accuracies_score(y_test, y_pred))
+        balanced_accuracies.append(balanced_accuracy_score(y_test, y_pred))
         accuracy.append(accuracy_score(y_test, y_pred))
     return accuracy, auc_list, f1_scores, balanced_accuracies
 
@@ -68,13 +73,15 @@ def permutation_test(estimator, cv, X, y, groups=None, n_perm=0, n_jobs=1):
         clf = clone(estimator)
         y_perm = y[perm_index]
         groups_perm = groups[perm_index]
-        perm_acc, perm_auc, perm_f1_score, perm_bacc = cross_val_score(clf, cv, X, y_perm, groups_perm, n_jobs)
+        perm_acc, perm_auc, perm_f1_score, perm_bacc = cross_val_score(
+            clf, cv, X, y_perm, groups_perm, n_jobs
+        )
         acc_pscores.append(np.mean(perm_acc))
         auc_pscores.append(np.mean(perm_auc))
         bacc_pscores.append(np.mean(perm_bacc))
         f1_pscores.append(np.mean(perm_f1_score))
 
-    return acc_pscores, auc_pscores, bacc_pscores ,f1_pscores
+    return acc_pscores, auc_pscores, bacc_pscores, f1_pscores
 
 
 def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
@@ -134,7 +141,9 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
             )
             exit()
     clf = clone(estimator)
-    accuracies, aucs, f1_scores, balanced_accuracies = cross_val_score(clf, cv, X, y, groups, n_jobs)
+    accuracies, aucs, f1_scores, balanced_accuracies = cross_val_score(
+        clf, cv, X, y, groups, n_jobs
+    )
     acc_score = np.mean(accuracies)
     auc_score = np.mean(aucs)
     f1_score = np.mean(f1_scores)
@@ -151,7 +160,9 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
         "n_splits": cv.get_n_splits(X, y, groups),
     }
     if perm is not None:
-        acc_pscores, auc_pscores, f1_pscores, bacc_pscores = permutation_test(clf, cv, X, y, groups, perm, n_jobs)
+        acc_pscores, auc_pscores, f1_pscores, bacc_pscores = permutation_test(
+            clf, cv, X, y, groups, perm, n_jobs
+        )
         acc_pvalue = compute_pval(acc_score, acc_pscores)
         auc_pvalue = compute_pval(auc_score, auc_pscores)
         f1_pvalue = compute_pval(f1_score, f1_pscores)
@@ -343,17 +354,6 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
         for index, lpgo in zip(self.indexes, self.lpgos):
             n *= lpgo.get_n_splits(None, None, groups[index])
         return n
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Returns
-        -------
-        n_splits : int
-            The number of splits.
-        """
-        return self.n_splits
 
     def _init_atributes(self, y, groups):
         """Initialization."""
@@ -398,268 +398,3 @@ class StratifiedShuffleGroupSplit(BaseEstimator):
             train_idx = np.arange(n)[np.in1d(groups, train_groups)]
             test_idx = np.arange(n)[np.in1d(groups, test_groups)]
             yield train_idx, test_idx
-
-
-class StratifiedShuffleGroupSplit(BaseEstimator):
-    def __init__(self, n_groups, n_iter=None, random_state=0):
-        """Pre-initialization."""
-        self.n_groups = n_groups
-        self.n_iter = n_iter
-        self.counter = 0
-        self.labels_list = []
-        self.n_each = None
-        self.n_labs = None
-        self.labels_list = None
-        self.lpgos = None
-        self.indexes = None
-        self.random_state = random_state
-
-    def _init_atributes(self, y, groups):
-        """Initialization."""
-        if len(y) != len(groups):
-            raise Exception("Error: y and groups need to have the same length")
-        if y is None:
-            raise Exception("Error: y cannot be None")
-        if groups is None:
-            raise Exception("Error: this function requires a groups parameter")
-        if self.labels_list is None:
-            self.labels_list = list(set(y))
-        if self.n_labs is None:
-            self.n_labs = len(self.labels_list)
-        assert (
-            self.n_groups % self.n_labs == 0
-        ), "Error: The number of groups to leave out must be a multiple of the number of classes"
-        if self.n_each is None:
-            self.n_each = int(self.n_groups / self.n_labs)
-        if self.lpgos is None:
-            lpgos, indexes = [], []
-            for label in self.labels_list:
-                index = np.where(y == label)[0]
-                indexes.append(index)
-                lpgos.append(
-                    LeavePGroupsOut(self.n_each, random_state=self.random_state)
-                )
-            self.lpgos = lpgos
-            self.indexes = np.array(indexes)
-
-    def split(self, X, y, groups):
-        """generator for splits of the data.
-
-        Parameters
-        ----------
-        X : array
-            The data, of shape (n_trials x n_features)
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Yields
-        ------
-        train_idx : array
-            The index of the values in the train split.
-        test_idx : array
-            The index of the values in the test split.
-        """
-        self._init_atributes(y, groups)
-        y = np.asarray(y)
-        groups = np.asarray(groups)
-        iterators = []
-        for lpgo, index in zip(self.lpgos, self.indexes):
-            iterators.append(lpgo.split(index, y[index], groups[index]))
-        for ite in product(*iterators):
-            if self.counter == self.n_iter:
-                break
-            self.counter += 1
-            train_idx = np.concatenate(
-                [index[it[0]] for it, index in zip(ite, self.indexes)]
-            )
-            test_idx = np.concatenate(
-                [index[it[1]] for it, index in zip(ite, self.indexes)]
-            )
-            yield train_idx, test_idx
-
-    def get_n_splits(self, X, y, groups):
-        """Gives the number of splits.
-
-        Parameters
-        ----------
-        X : placeholder for compatibility
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Returns
-        -------
-        n_splits : int
-            The number of splits.
-        """
-        self._init_atributes(y, groups)
-        if self.n_iter is not None:
-            return self.n_iter
-        groups = np.asarray(groups)
-        n = 1
-        for index, lpgo in zip(self.indexes, self.lpgos):
-            n *= lpgo.get_n_splits(None, None, groups[index])
-        return n
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Returns
-        -------
-        n_splits : int
-            The number of splits.
-        """
-        return self.n_splits
-
-    def _init_atributes(self, y, groups):
-        """Initialization."""
-        if len(y) != len(groups):
-            raise Exception("Error: y and groups need to have the same length")
-        if y is None:
-            raise Exception("Error: y cannot be None")
-        if groups is None:
-            raise Exception("Error: this function requires a groups parameter")
-        self.n_groups = len(set(groups))
-
-    def split(self, X, y, groups):
-        """generator for splits of the data.
-
-        Parameters
-        ----------
-        X : array
-            The data, of shape (n_trials x n_features)
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Yields
-        ------
-        train_idx : array
-            The index of the values in the train split.
-        test_idx : array
-            The index of the values in the test split.
-        """
-        self._init_atributes(y, groups)
-        y = np.asarray(y)
-        n = len(y)
-        groups = np.asarray(groups)
-        unique_groups, group_idx = np.unique(groups, return_index=True)
-        groups_labels = y[group_idx]
-        for train, test in SSS(
-            n_splits=self.n_splits, random_state=self.random_state
-        ).split(unique_groups, groups_labels):
-            train_groups = unique_groups[train]
-            test_groups = unique_groups[test]
-            train_idx = np.arange(n)[np.in1d(groups, train_groups)]
-            test_idx = np.arange(n)[np.in1d(groups, test_groups)]
-            yield train_idx, test_idx
-
-
-class StratifiedShuffleGroupSplit(BaseEstimator):
-    def __init__(self, n_groups, n_iter=None, random_state=0):
-        """Pre-initialization."""
-        self.n_groups = n_groups
-        self.n_iter = n_iter
-        self.counter = 0
-        self.labels_list = []
-        self.n_each = None
-        self.n_labs = None
-        self.labels_list = None
-        self.lpgos = None
-        self.indexes = None
-        self.random_state = random_state
-
-    def _init_atributes(self, y, groups):
-        """Initialization."""
-        if len(y) != len(groups):
-            raise Exception("Error: y and groups need to have the same length")
-        if y is None:
-            raise Exception("Error: y cannot be None")
-        if groups is None:
-            raise Exception("Error: this function requires a groups parameter")
-        if self.labels_list is None:
-            self.labels_list = list(set(y))
-        if self.n_labs is None:
-            self.n_labs = len(self.labels_list)
-        assert (
-            self.n_groups % self.n_labs == 0
-        ), "Error: The number of groups to leave out must be a multiple of the number of classes"
-        if self.n_each is None:
-            self.n_each = int(self.n_groups / self.n_labs)
-        if self.lpgos is None:
-            lpgos, indexes = [], []
-            for label in self.labels_list:
-                index = np.where(y == label)[0]
-                indexes.append(index)
-                lpgos.append(
-                    LeavePGroupsOut(self.n_each, random_state=self.random_state)
-                )
-            self.lpgos = lpgos
-            self.indexes = np.array(indexes)
-
-    def split(self, X, y, groups):
-        """generator for splits of the data.
-
-        Parameters
-        ----------
-        X : array
-            The data, of shape (n_trials x n_features)
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Yields
-        ------
-        train_idx : array
-            The index of the values in the train split.
-        test_idx : array
-            The index of the values in the test split.
-        """
-        self._init_atributes(y, groups)
-        y = np.asarray(y)
-        groups = np.asarray(groups)
-        iterators = []
-        for lpgo, index in zip(self.lpgos, self.indexes):
-            iterators.append(lpgo.split(index, y[index], groups[index]))
-        for ite in product(*iterators):
-            if self.counter == self.n_iter:
-                break
-            self.counter += 1
-            train_idx = np.concatenate(
-                [index[it[0]] for it, index in zip(ite, self.indexes)]
-            )
-            test_idx = np.concatenate(
-                [index[it[1]] for it, index in zip(ite, self.indexes)]
-            )
-            yield train_idx, test_idx
-
-    def get_n_splits(self, X, y, groups):
-        """Gives the number of splits.
-
-        Parameters
-        ----------
-        X : placeholder for compatibility
-        y : list
-            The labels list
-        groups : list
-            The groups list
-
-        Returns
-        -------
-        n_splits : int
-            The number of splits.
-        """
-        self._init_atributes(y, groups)
-        if self.n_iter is not None:
-            return self.n_iter
-        groups = np.asarray(groups)
-        n = 1
-        for index, lpgo in zip(self.indexes, self.lpgos):
-            n *= lpgo.get_n_splits(None, None, groups[index])
-        return n
