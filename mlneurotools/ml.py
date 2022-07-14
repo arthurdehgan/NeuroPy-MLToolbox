@@ -6,22 +6,19 @@ Author: Arthur Dehgan"""
 from itertools import permutations, product
 from sklearn.base import clone, BaseEstimator
 from sklearn.model_selection import StratifiedShuffleSplit as SSS, LeavePGroupsOut
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, balanced_accuracy_score, f1_score
 import numpy as np
 from numpy.random import permutation
 from joblib import Parallel, delayed
 from .stats import compute_pval
 
 
-def _cross_val(train_index, test_index, estimator, X, y, groups=None):
+def _cross_val(train_index, test_index, estimator, X, y):
     """fit and predict using the given data."""
     clf = clone(estimator)
     x_train, x_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
-    try:
-        clf.fit(x_train, y_train, groups[train_index])
-    except:
-        clf.fit(x_train, y_train)
+    clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     return y_pred, y_test
 
@@ -34,23 +31,23 @@ def cross_val_score(estimator, cv, X, y, groups=None, n_jobs=1):
     clf = clone(estimator)
     crossv = clone(cv, safe=False)
     results = Parallel(n_jobs=n_jobs)(
-        delayed(_cross_val)(train_index, test_index, clf, X, y, groups)
+        delayed(_cross_val)(train_index, test_index, clf, X, y)
         for train_index, test_index in crossv.split(X=X, y=y, groups=groups)
     )
 
     AUC = not X.shape[1] > 1 and cv.n_groups > 1
-    accuracy, auc_list = [], []
+    accuracy, auc_list, f1_scores, balanced_accuracies = [], [], [], []
     for test in results:
         y_pred = test[0]
         y_test = test[1]
-        acc = accuracy_score(y_test, y_pred)
         if AUC:
-            auc = roc_auc_score(y_test, y_pred)
+            auc_list.append(roc_auc_score(y_test, y_pred))
         else:
-            auc = 0
-        accuracy.append(acc)
-        auc_list.append(auc)
-    return accuracy, auc_list
+            auc_list.append(0)
+        f1_scores.append(f1_score(y_test, y_pred))
+        balanced_accuracies.append(balanced_accuracies_score(y_test, y_pred))
+        accuracy.append(accuracy_score(y_test, y_pred))
+    return accuracy, auc_list, f1_scores, balanced_accuracies
 
 
 def _permutations(iterable, size, limit=None):
