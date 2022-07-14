@@ -35,15 +35,14 @@ def cross_val_score(estimator, cv, X, y, groups=None, n_jobs=1):
         for train_index, test_index in crossv.split(X=X, y=y, groups=groups)
     )
 
-    AUC = not X.shape[1] > 1 and cv.n_groups > 1
     accuracy, auc_list, f1_scores, balanced_accuracies = [], [], [], []
     for test in results:
         y_pred = test[0]
         y_test = test[1]
-        if AUC:
+        try:
             auc_list.append(roc_auc_score(y_test, y_pred))
-        else:
-            auc_list.append(0)
+        except:
+            auc_list.append(np.nan)
         f1_scores.append(f1_score(y_test, y_pred))
         balanced_accuracies.append(balanced_accuracies_score(y_test, y_pred))
         accuracy.append(accuracy_score(y_test, y_pred))
