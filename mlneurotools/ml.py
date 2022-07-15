@@ -72,7 +72,7 @@ def permutation_test(estimator, cv, X, y, groups=None, n_perm=0, n_jobs=1):
         perm_index = permutation(len(y))
         clf = clone(estimator)
         y_perm = y[perm_index]
-        groups_perm = groups[perm_index]
+        groups_perm = groups[perm_index] if groups is not None else None
         perm_acc, perm_auc, perm_f1_score, perm_bacc = cross_val_score(
             clf, cv, X, y_perm, groups_perm, n_jobs
         )
