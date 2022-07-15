@@ -151,8 +151,8 @@ def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
     save = {
         "acc_score": [acc_score],
         "auc_score": [auc_score],
-        "f1_score": [acc_score],
-        "bacc_score": [auc_score],
+        "f1_score": [f1_score],
+        "bacc_score": [bacc_score],
         "acc": accuracies,
         "auc": aucs,
         "f1": f1_scores,
