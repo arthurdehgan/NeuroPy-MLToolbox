@@ -25,7 +25,7 @@ def _cross_val(train_index, test_index, estimator, X, y):
     y_train, y_test = y[train_index], y[test_index]
     clf.fit(x_train, y_train)
     # TODO all classifiers do not have predict_proba !!!
-    y_pred = clf.predict_proba(x_test)
+    y_pred = clf.predict_proba(x_test)[:, 1]
     return y_pred, y_test
 
 
