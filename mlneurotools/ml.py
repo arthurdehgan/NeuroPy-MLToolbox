@@ -81,7 +81,7 @@ def permutation_test(estimator, cv, X, y, groups=None, n_perm=0, n_jobs=1):
         bacc_pscores.append(np.mean(perm_bacc))
         f1_pscores.append(np.mean(perm_f1_score))
 
-    return acc_pscores, auc_pscores, bacc_pscores, f1_pscores
+    return acc_pscores, auc_pscores, f1_pscores, bacc_pscores
 
 
 def classification(estimator, cv, X, y, groups=None, perm=None, n_jobs=1):
