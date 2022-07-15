@@ -24,7 +24,8 @@ def _cross_val(train_index, test_index, estimator, X, y):
     x_train, x_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
     clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
+    # TODO all classifiers do not have predict_proba !!!
+    y_pred = clf.predict_proba(x_test)
     return y_pred, y_test
 
 
@@ -48,6 +49,7 @@ def cross_val_score(estimator, cv, X, y, groups=None, n_jobs=1):
             auc_list.append(roc_auc_score(y_test, y_pred))
         except:
             auc_list.append(np.nan)
+        y_pred = (y_pred > 0.5).astype(int)
         f1_scores.append(f1_score(y_test, y_pred))
         balanced_accuracies.append(balanced_accuracy_score(y_test, y_pred))
         accuracy.append(accuracy_score(y_test, y_pred))
